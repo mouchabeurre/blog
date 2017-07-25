@@ -1,0 +1,25 @@
+{
+    "version": "0.1.0",
+    "configurations": [
+        {
+            "name": "mocha_tests",
+            "type": "node",
+            "request": "launch",
+            /* Locally installed mocha */
+            "program": "${workspaceRoot}/node_modules/mocha/bin/_mocha",
+            "stopOnEntry": false,
+            /* Specify which are the file you want the runner to pick up. */
+            "args": [
+                // "test/connection.js",
+                // "test/saving.js",
+                "models/user.js",
+                "--no-timeouts"
+            ],
+            "cwd": "${workspaceRoot}/",
+            "runtimeExecutable": null,
+            "env": {
+                "NODE_ENV": "testing"
+            }
+        }
+    ]
+}

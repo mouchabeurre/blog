@@ -1,0 +1,32 @@
+{
+  "name": "blog",
+  "version": "1.0.0",
+  "description": "MEAN blog",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app",
+    "test": "mocha"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "1.17.1",
+    "cors": "2.8.3",
+    "express": "4.15.2",
+    "jsonwebtoken": "7.4.0",
+    "mocha": "^3.4.2",
+    "mongoose": "4.9.9",
+    "passport": "0.3.2",
+    "passport-jwt": "2.2.1",
+    "shortid": "^2.2.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mouchabeurre/MEAN-blog.git"
+  },
+  "author": "mouchabeurre",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mouchabeurre/MEAN-blog/issues"
+  },
+  "homepage": "https://github.com/mouchabeurre/MEAN-blog#readme"
+}

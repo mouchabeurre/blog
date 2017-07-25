@@ -83,3 +83,13 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+# ==============
+# Project Files
+# ==============
+
+# angular app
+angular-src
+
+# VS Code
+.vscode
