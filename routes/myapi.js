@@ -98,7 +98,7 @@ router.get('/feed', (req, res, next) => {
 });
 
 // get specific post
-router.get('/posts/:id', (req, res, next) => {
+router.get('/post/:id', (req, res, next) => {
 	let id = req.params.id;
 	Post.getPost(id, (err, post) => {
 		if (err) {
@@ -127,7 +127,7 @@ router.post('/post/submit', passport.authenticate('jwt', { session: false }), (r
 });
 
 // comment
-router.post('/posts/:id/comment', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+router.post('/post/:id/comment', passport.authenticate('jwt', { session: false }), (req, res, next) => {
 	let id = req.params.id;
 	let content = req.body.content;
 	let authorId = req.user._id;
@@ -154,7 +154,7 @@ router.post('/posts/:id/comment', passport.authenticate('jwt', { session: false 
 
 // vote post
 // upvote
-router.put('/posts/:id/upvote', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+router.put('/post/:id/upvote', passport.authenticate('jwt', { session: false }), (req, res, next) => {
 	let id = req.params.id;
 	Post.votePost(id, 1, (err, post) => {
 		if (err) {
@@ -166,7 +166,7 @@ router.put('/posts/:id/upvote', passport.authenticate('jwt', { session: false })
 });
 
 // downvote
-router.put('/posts/:id/downvote', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+router.put('/post/:id/downvote', passport.authenticate('jwt', { session: false }), (req, res, next) => {
 	let id = req.params.id;
 	Post.votePost(id, -1, (err, post) => {
 		if (err) {
