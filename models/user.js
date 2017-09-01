@@ -56,6 +56,26 @@ const User = module.exports = mongoose.model('User', UserSchema);
 const Post = require('../models/post');
 const Comment = require('../models/comment');
 
+module.exports.usernameAvail = function (username, callback) {
+	User.findOne({ username: username }, "username", function (err, data) {
+		if(data !== null) {
+			callback(err, false);
+		} else {
+			callback(err, true);
+		}
+	});
+}
+
+module.exports.emailAvail = function (email, callback) {
+	User.findOne({ email: email }, "email", function (err, data) {
+		if(data !== null) {
+			callback(err, false);
+		} else {
+			callback(err, true);
+		}
+	});
+}
+
 module.exports.getUserById = function (id, callback) {
 	User.findById(id, { "password": 0 }, callback);
 }
