@@ -191,6 +191,7 @@ router.post('/post/submit', passport.authenticate('jwt', {
   let newPost = new Post({
     title: req.body.title,
     content: req.body.content,
+    imageURL: req.body.imageURL,
     authorId: req.user._id
   });
 
