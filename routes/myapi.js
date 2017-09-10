@@ -21,12 +21,14 @@ router.post('/user/register', (req, res, next) => {
     if (err) {
       res.json({
         success: false,
-        msg: 'Something went wrong: ' + err
+        msg: 'Something went wrong: ' + err,
+        feedback: 3 // danger
       });
     } else {
       res.json({
         success: true,
-        msg: 'You are now registered and can log in'
+        msg: 'You are now registered and can log in',
+        feedback: 0 // success
       });
     }
   });
@@ -93,12 +95,14 @@ router.post('/user/authenticate', (req, res, next) => {
       if (req.body.username) {
         return res.json({
           success: false,
-          msg: 'User <b>' + username + '</b> not found or wrong password!'
+          msg: 'User <b>' + username + '</b> not found or wrong password!',
+          feedback: 3 // danger
         });
       } else {
         return res.json({
           success: false,
-          msg: 'User not found or wrong password!'
+          msg: 'User not found or wrong password!',
+          feedback: 3 // danger
         });
       }
     }
@@ -115,6 +119,7 @@ router.post('/user/authenticate', (req, res, next) => {
         res.json({
           success: true,
           msg: 'Welcome back <b>' + user.name + '</b>!',
+          feedback: 0, // success,
           token: 'JWT ' + token,
           user: {
             id: user._id,
@@ -126,7 +131,8 @@ router.post('/user/authenticate', (req, res, next) => {
       } else {
         return res.json({
           success: false,
-          msg: 'User not found or wrong password!'
+          msg: 'User not found or wrong password!',
+          feedback: 3 // danger
         });
       }
     });
@@ -207,12 +213,14 @@ router.post('/post/submit', passport.authenticate('jwt', {
     if (err) {
       res.json({
         success: false,
-        msg: 'Failed to submit'
+        msg: 'Failed to submit',
+        feedback: 3 // danger
       });
     } else {
       res.json({
         success: true,
-        msg: 'Submitted'
+        msg: 'Submitted',
+        feedback: 0 // success
       });
     }
   });
@@ -229,7 +237,8 @@ router.post('/post/:id/comment', passport.authenticate('jwt', {
     if (err) {
       res.json({
         success: false,
-        msg: 'Failed to comment'
+        msg: 'Failed to comment',
+        feedback: 3 // danger
       });
     } else {
       let newComment = new Comment({
@@ -238,16 +247,19 @@ router.post('/post/:id/comment', passport.authenticate('jwt', {
         content: content
       });
 
-      Comment.addComment(newComment, (err) => {
+      Comment.addComment(newComment, (err, comment) => {
         if (err) {
           res.json({
             success: false,
-            msg: 'Failed to comment'
+            msg: 'Failed to comment',
+            feedback: 3 // danger
           });
         } else {
           res.json({
             success: true,
-            msg: 'Commented'
+            msg: 'Commented',
+            feedback: 0, // success
+            newComment: comment
           });
         }
       });

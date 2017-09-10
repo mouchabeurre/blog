@@ -65,7 +65,11 @@ module.exports.getPost = function(id, callback) {
     select: 'shortUserId username'
   }, {
     path: 'comments',
-    select: 'shortCommentId content date karma modified'
+    select: 'authorId postId shortCommentId content date karma modified',
+    populate: {
+      path: 'authorId',
+      select: 'shortUserId username'
+    }
   }];
   Post.findOneAndUpdate({
     shortPostId: id
