@@ -81,15 +81,50 @@ module.exports.getPost = function(id, callback) {
   populate(populateQuery).
   exec(callback);
 }
+// fill an array of voted comments for a specific post
+// if (userId) {
+//   let areVoted = [];
+//   for (comment of post.comments) {
+//     let populateQuery = [{
+//       path: 'cvotes.commentId',
+//       select: '_id'
+//     }];
+//     User.findById(userId, 'cvotes').
+//     populate(populateQuery).
+//     exec(function(err, user) {
+//       if (err) {
+//         console.log('Something went wrong');
+//       } else if (user !== null) {
+//         for (votedComment of user.cvotes) {
+//           if (votedComment.commentId._id.equals(comment._id)) {
+//             areVoted.push(comment.shortCommentId);
+//           }
+//         }
+//       }
+//     });
+//   }
+//   post.votedArray = areVoted;
+// }
 
-module.exports.votePost = function(id, vote, callback) {
+module.exports.votePost = function(postId, vote, userId, callback) {
   Post.findOneAndUpdate({
-    shortPostId: id
+    shortPostId: postId
   }, {
     $inc: {
       karma: vote * 1
     }
-  }, callback);
+  }, function(err, res) {
+    User.findOneAndUpdate({
+      shortUserId: userId
+    }, {
+      $push: {
+        pvotes: {
+          postId: res._id,
+          vote: vote
+        }
+      }
+    }, callback);
+  });
 }
 
 /**

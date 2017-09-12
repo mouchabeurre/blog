@@ -185,8 +185,8 @@ router.get('/feed', (req, res, next) => {
 
 // get specific post
 router.get('/post/:id', (req, res, next) => {
-  let id = req.params.id;
-  Post.getPost(id, (err, post) => {
+  let postId = req.params.id;
+  Post.getPost(postId, (err, post) => {
     if (err) {
       res.json({
         success: false,
@@ -272,8 +272,9 @@ router.post('/post/:id/comment', passport.authenticate('jwt', {
 router.put('/post/:id/upvote', passport.authenticate('jwt', {
   session: false
 }), (req, res, next) => {
-  let id = req.params.id;
-  Post.votePost(id, 1, (err, post) => {
+  let postId = req.params.id;
+  let userId = req.user._id;
+  Post.votePost(postId, 1, userId, (err, post) => {
     if (err) {
       res.json({
         success: false,
@@ -292,8 +293,9 @@ router.put('/post/:id/upvote', passport.authenticate('jwt', {
 router.put('/post/:id/downvote', passport.authenticate('jwt', {
   session: false
 }), (req, res, next) => {
-  let id = req.params.id;
-  Post.votePost(id, -1, (err, post) => {
+  let postId = req.params.id;
+  let userId = req.user._id;
+  Post.votePost(postId, -1, userId, (err, post) => {
     if (err) {
       res.json({
         success: false,
@@ -307,4 +309,50 @@ router.put('/post/:id/downvote', passport.authenticate('jwt', {
     }
   });
 });
+
+// // vote comment
+// // upvote
+router.put('/comment/:id/upvote', passport.authenticate('jwt', {
+  session: false
+}), (req, res, next) => {
+  let commentId = req.params.id;
+  let userId = req.user._id;
+  Comment.voteComment(commentId, 1, userId, (err, processedVote) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: 'Failed to vote' + err
+      });
+    } else {
+      res.json({
+        success: true,
+        msg: 'Upvoted',
+        voted: processedVote
+      });
+    }
+  });
+});
+
+// downvote
+router.put('/comment/:id/downvote', passport.authenticate('jwt', {
+  session: false
+}), (req, res, next) => {
+  let commentId = req.params.id;
+  let userId = req.user._id;
+  Comment.voteComment(commentId, -1, userId, (err, processedVote) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: 'Failed to vote'
+      });
+    } else {
+      res.json({
+        success: true,
+        msg: 'Downvoted',
+        voted: processedVote
+      });
+    }
+  });
+});
+
 module.exports = router;

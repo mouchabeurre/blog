@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const config = require('../config/database');
 const shortid = require('shortid');
+const assert = require('assert');
 
 // Comment Schema
 // TODO: add a parent param to nest replies
@@ -50,22 +51,121 @@ const Comment = module.exports = mongoose.model('Comment', CommentSchema);
 const User = require('../models/user');
 const Post = require('../models/post');
 
+getUserVoteByCommentId = function(cid, uid, callback) {
+  Comment.findOne({
+    shortCommentId: cid
+  }, '_id', function(err, comment_id) {
+    let populateQuery = [{
+      path: 'cvotes.commentId',
+      select: '_id'
+    }];
+    User.findById(uid, 'cvotes').
+    populate(populateQuery).
+    exec(function(err, res) {
+      if (err) {
+        let loadout = {
+          isNew: false,
+          vote: 0
+        };
+        callback(loadout);
+        return null;
+      } else if (res !== null) {
+        for (votedComment of res.cvotes) {
+          if (votedComment.commentId._id.equals(comment_id._id)) {
+            let loadout = {
+              isNew: false,
+              vote: votedComment.vote
+            };
+            callback(loadout);
+            return null;
+          }
+        }
+        let loadout = {
+          isNew: true,
+          vote: 0
+        };
+        callback(loadout);
+        return null;
+      }
+    });
+  });
+}
+
 module.exports.addComment = function(newComment, callback) {
   newComment.save(function(err, comment) {
-    Post.findByIdAndUpdate(comment.postId, {
+    User.findByIdAndUpdate(newComment.authorId, {
       $push: {
         comments: {
           _id: comment._id
         }
       }
     }, function(err, res) {
-      let populateQuery = [{
-        path: 'authorId',
-        select: 'shortUserId username'
-      }];
-      Comment.findById(comment._id).
-      populate(populateQuery).
-      exec(callback);
+      Post.findByIdAndUpdate(comment.postId, {
+        $push: {
+          comments: {
+            _id: comment._id
+          }
+        }
+      }, function(err, res) {
+        let populateQuery = [{
+          path: 'authorId',
+          select: 'shortUserId username'
+        }];
+        Comment.findById(comment._id).
+        populate(populateQuery).
+        exec(callback);
+      });
+    });
+  });
+}
+
+module.exports.voteComment = function(commentId, vote, userId, callback) {
+  getUserVoteByCommentId(commentId, userId, function(loadout) {
+    let processedVote;
+    if (loadout.vote == vote) {
+      processedVote = -vote;
+    } else if (loadout.vote == -vote) {
+      processedVote = 2 * vote;
+    } else {
+      processedVote = vote;
+    }
+    if (loadout.vote > vote) {
+      vote = -1;
+    } else if (loadout.vote < vote) {
+      vote = 1
+    } else {
+      vote = 0
+    }
+    Comment.findOneAndUpdate({
+      shortCommentId: commentId
+    }, {
+      $inc: {
+        karma: processedVote
+      }
+    }, function(err, comment) {
+      if (loadout.isNew) {
+        User.findByIdAndUpdate(userId, {
+          $push: {
+            cvotes: {
+              commentId: comment._id,
+              vote: processedVote
+            }
+          }
+        }, function(err, user) {
+          callback(err, processedVote);
+        });
+      } else {
+        User.findOneAndUpdate({
+          _id: userId,
+          "cvotes.commentId": comment._id
+        }, {
+          $set: {
+            "cvotes.$.vote": vote
+          }
+        }, function(err, user) {
+          callback(err, processedVote);
+        });
+      }
     });
   });
 }
