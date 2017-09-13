@@ -267,6 +267,27 @@ router.post('/post/:id/comment', passport.authenticate('jwt', {
   });
 });
 
+// get user comments votes for post
+router.get('/post/:id/cvotes', passport.authenticate('jwt', {
+  session: false
+}), (req, res, next) => {
+  let postId = req.params.id;
+  let userId = req.user._id;
+  User.getPostVotes(postId, userId, (err, votedArray) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: 'Failed to retrieve comments votes'
+      });
+    } else {
+      res.json({
+        success: true,
+        cvotedArray: votedArray
+      });
+    }
+  });
+});
+
 // vote post
 // upvote
 router.put('/post/:id/upvote', passport.authenticate('jwt', {

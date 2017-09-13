@@ -138,3 +138,38 @@ module.exports.comparePassword = function(candidatePassword, hash, callback) {
     callback(null, isMatch);
   });
 }
+
+module.exports.getPostVotes = function(postId, userId, callback) {
+  Post.findOne({
+    shortPostId: postId
+  }, {
+    'comments': 1
+  }).
+  populate([{
+    path: 'comments',
+    select: 'shortCommentId'
+  }]).
+  exec(function(errpost, post) {
+    User.findById(userId, {
+      'cvotes': 1
+    }).
+    populate([{
+      path: 'cvotes.commentId',
+      select: '_id'
+    }]).
+    exec(function(erruser, user) {
+      let areVoted = [];
+      for (let i = 0; i < post.comments.length; i++) {
+        for (let j = 0; j < user.cvotes.length; j++) {
+          if (user.cvotes[j].commentId._id.equals(post.comments[i]._id)) {
+            areVoted.push({
+              id: post.comments[i].shortCommentId,
+              vote: user.cvotes[j].vote
+            });
+          }
+        }
+      }
+      callback(errpost, areVoted);
+    });
+  });
+}
