@@ -95,13 +95,13 @@ router.post('/user/authenticate', (req, res, next) => {
       if (req.body.username) {
         return res.json({
           success: false,
-          msg: 'User <b>' + username + '</b> not found or wrong password!',
+          msg: 'User not found or wrong password',
           feedback: 3 // danger
         });
       } else {
         return res.json({
           success: false,
-          msg: 'User not found or wrong password!',
+          msg: 'User not found or wrong password',
           feedback: 3 // danger
         });
       }
@@ -122,7 +122,7 @@ router.post('/user/authenticate', (req, res, next) => {
           feedback: 0, // success,
           token: 'JWT ' + token,
           user: {
-            id: user._id,
+            shortUserId: user.shortUserId,
             name: user.name,
             username: user.username,
             email: user.email
@@ -143,14 +143,14 @@ router.post('/user/authenticate', (req, res, next) => {
 router.get('/profile', passport.authenticate('jwt', {
   session: false
 }), (req, res, next) => {
-  res.json(req.user);
-  // User.getUserById(req._id, (err, profile) => {
-  // 	if (err) {
-  // 		res.json({ success: false, msg: 'Failed to retrieve profile' });
-  // 	} else {
-  // 		res.json(profile);
-  // 	}
-  // });
+  let userId = req.user._id;
+  User.getUserById(userId, (err, profile) => {
+  	if (err) {
+  		res.json({ success: false, msg: 'Failed to retrieve profile' });
+  	} else {
+  		res.json(profile);
+  	}
+  });
 });
 
 // get specific profile
@@ -213,13 +213,13 @@ router.post('/post/submit', passport.authenticate('jwt', {
     if (err) {
       res.json({
         success: false,
-        msg: 'Failed to submit',
+        msg: 'Failed to submit post',
         feedback: 3 // danger
       });
     } else {
       res.json({
         success: true,
-        msg: 'Submitted',
+        msg: ' Post submitted',
         feedback: 0 // success
       });
     }

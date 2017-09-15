@@ -19,17 +19,7 @@ const UserSchema = mongoose.Schema({
   },
   username: {
     type: String,
-    required: true,
-    validate: {
-      validator: function(v, cb) {
-        User.find({
-          username: v
-        }, "username", function(err, data) {
-          data.length > 0 ? cb(false) : cb(true);
-        });
-      },
-      message: 'Username already taken'
-    }
+    required: true
   },
   password: {
     type: String,
@@ -39,10 +29,10 @@ const UserSchema = mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  karma: {
-    type: Number,
-    default: 0
-  },
+  posts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Post'
+  }],
   comments: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Comment'
@@ -100,10 +90,36 @@ module.exports.emailAvail = function(email, callback) {
   });
 }
 
+module.exports._authUserById = function(id, callback) {
+  User.findById(id, {
+    "shortUserId": 1,
+    "username": 1
+  }, callback);
+}
+
 module.exports.getUserById = function(id, callback) {
   User.findById(id, {
     "password": 0
-  }, callback);
+  }).
+  populate([{
+    path: 'comments',
+    select: 'karma'
+  }, {
+    path: 'posts',
+    select: 'karma'
+  }]).
+  lean().
+  exec(function(erruser, user) {
+    let totalKarma = 0;
+    for (comment of user.comments) {
+      totalKarma += comment.karma;
+    }
+    for (post of user.posts) {
+      totalKarma += post.karma;
+    }
+    user.karma = totalKarma;
+    callback(erruser, user);
+  });
 }
 
 module.exports.getUserByUsername = function(username, auth, callback) {

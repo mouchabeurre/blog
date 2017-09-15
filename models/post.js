@@ -52,7 +52,16 @@ const User = require('../models/user');
  */
 
 module.exports.addPost = function(newPost, callback) {
-  newPost.save(callback);
+  newPost.save(function(errpost, post) {
+    User.findByIdAndUpdate(post.authorId, {
+      $push: {
+        posts: post._id
+      }
+    }, function(erruser, user) {
+      console.log(erruser, errpost);
+      callback(errpost);
+    });
+  });
 }
 
 module.exports.modifyPost = function(newPost, callback) {
