@@ -69,17 +69,6 @@ module.exports.modifyPost = function(newPost, callback) {
 }
 
 module.exports.getPost = function(id, callback) {
-  let populateQuery = [{
-    path: 'authorId',
-    select: 'shortUserId username'
-  }, {
-    path: 'comments',
-    select: 'authorId postId shortCommentId content date karma modified',
-    populate: {
-      path: 'authorId',
-      select: 'shortUserId username'
-    }
-  }];
   Post.findOneAndUpdate({
     shortPostId: id
   }, {
@@ -87,28 +76,138 @@ module.exports.getPost = function(id, callback) {
       views: 1
     }
   }).
-  populate(populateQuery).
+  populate([{
+    path: 'authorId',
+    select: 'shortUserId username'
+  }, {
+    path: 'comments',
+    select: 'authorId postId shortCommentId content date karma modified',
+    options: {
+      sort: {
+        'date': -1
+      }
+    },
+    populate: {
+      path: 'authorId',
+      select: 'shortUserId username'
+    }
+  }]).
   exec(callback);
 }
 
-module.exports.votePost = function(postId, vote, userId, callback) {
-  Post.findOneAndUpdate({
+module.exports.getPostCommentVotes = function(postId, userId, callback) {
+  Post.findOne({
     shortPostId: postId
   }, {
-    $inc: {
-      karma: vote * 1
-    }
-  }, function(err, res) {
-    User.findOneAndUpdate({
-      shortUserId: userId
-    }, {
-      $push: {
-        pvotes: {
-          postId: res._id,
-          vote: vote
+    'comments': 1
+  }).
+  populate([{
+    path: 'comments',
+    select: 'shortCommentId'
+  }]).
+  exec(function(errpost, post) {
+    User.findById(userId, {
+      'cvotes': 1
+    }).
+    populate([{
+      path: 'cvotes.commentId',
+      select: '_id'
+    }]).
+    exec(function(erruser, user) {
+      let areVoted = [];
+      for (let i = 0; i < post.comments.length; i++) {
+        for (let j = 0; j < user.cvotes.length; j++) {
+          if (user.cvotes[j].commentId._id.equals(post.comments[i]._id)) {
+            areVoted.push({
+              id: post.comments[i].shortCommentId,
+              vote: user.cvotes[j].vote
+            });
+          }
         }
       }
-    }, callback);
+      callback(errpost, areVoted);
+    });
+  });
+}
+
+module.exports.getPostVote = function(postId, userId, callback) {
+  Post.findOne({
+    shortPostId: postId
+  }, {
+    '_id': 1
+  }, function(errpost, post) {
+    User.findById(userId, {
+      'pvotes': 1
+    }, function(erruser, user) {
+      for (userPost of user.pvotes) {
+        if (userPost.postId.equals(post._id)) {
+          let loadout = {
+            isNew: false,
+            vote: userPost.vote
+          };
+          callback(false, loadout);
+          return null;
+        }
+      }
+      let loadout = {
+        isNew: true,
+        vote: 0
+      };
+      callback(false, loadout);
+      return null;
+    });
+  });
+}
+
+module.exports.votePost = function(postId, vote, userId, callback) {
+  Post.getPostVote(postId, userId, function(err, loadout) {
+    let processedVote;
+    if (loadout.vote == vote) {
+      processedVote = -vote;
+    } else if (loadout.vote == -vote) {
+      processedVote = 2 * vote;
+    } else {
+      processedVote = vote;
+    }
+    if (loadout.vote > vote) {
+      vote = -1;
+    } else if (loadout.vote < vote) {
+      vote = 1
+    } else {
+      vote = 0
+    }
+    console.log(loadout.vote, vote, processedVote);
+    Post.findOneAndUpdate({
+      shortPostId: postId
+    }, {
+      $inc: {
+        karma: processedVote
+      }
+    }, function(errpost, post) {
+      if (loadout.isNew) {
+        User.findByIdAndUpdate(userId, {
+          $push: {
+            pvotes: {
+              postId: post._id,
+              vote: processedVote
+            }
+          }
+        }, function(erruser, user) {
+          callback(erruser, processedVote);
+        });
+      } else {
+        User.findOneAndUpdate({
+          _id: userId,
+          "pvotes.postId": post._id
+        }, {
+          $set: {
+            "pvotes.$.vote": vote
+          }
+        }, function(erruser, user) {
+          callback(erruser, processedVote);
+        });
+      }
+    });
   });
 }
 
@@ -117,17 +216,16 @@ module.exports.votePost = function(postId, vote, userId, callback) {
  */
 
 module.exports.getPostsFeed = function(callback) {
-  let populateQuery = [{
-    path: 'authorId',
-    select: 'shortUserId username'
-  }];
   Post.find({}, null, {
     skip: 0,
-    limit: 10,
+    limit: 16,
     sort: {
       date: -1
     }
   }).
-  populate(populateQuery).
+  populate([{
+    path: 'authorId',
+    select: 'shortUserId username'
+  }]).
   exec(callback);
 }

@@ -91,5 +91,8 @@ $RECYCLE.BIN/
 # angular app
 angular-src
 
+# public build
+# public
+
 # VS Code
 .vscode

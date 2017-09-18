@@ -20,6 +20,10 @@ const CommentSchema = mongoose.Schema({
     ref: 'Post',
     required: true
   },
+  shortPostId: {
+    type: String,
+    default: shortid.generate
+  },
   date: {
     type: Date,
     default: Date.now
@@ -54,13 +58,12 @@ const Post = require('../models/post');
 getUserVoteByCommentId = function(cid, uid, callback) {
   Comment.findOne({
     shortCommentId: cid
-  }, '_id', function(err, comment_id) {
-    let populateQuery = [{
+  }, {'_id': 1}, function(err, comment_id) {
+    User.findById(uid, {'cvotes': 1}).
+    populate([{
       path: 'cvotes.commentId',
       select: '_id'
-    }];
-    User.findById(uid, 'cvotes').
-    populate(populateQuery).
+    }]).
     exec(function(err, res) {
       if (err) {
         let loadout = {

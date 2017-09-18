@@ -53,7 +53,7 @@ app.get('*', (req, res) => {
 });
 
 // Port Number
-const port = 3000;
+const port = process.env.PORT || 8080;
 
 // Start Server
 app.listen(port, () => {

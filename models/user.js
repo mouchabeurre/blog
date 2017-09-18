@@ -103,10 +103,20 @@ module.exports.getUserById = function(id, callback) {
   }).
   populate([{
     path: 'comments',
-    select: 'karma'
+    select: 'date shortPostId content karma',
+    options: {
+      sort: {
+        'date': -1
+      }
+    },
   }, {
     path: 'posts',
-    select: 'karma'
+    select: 'date shortPostId title karma',
+    options: {
+      sort: {
+        'date': -1
+      }
+    },
   }]).
   lean().
   exec(function(erruser, user) {
@@ -123,19 +133,55 @@ module.exports.getUserById = function(id, callback) {
 }
 
 module.exports.getUserByUsername = function(username, auth, callback) {
-  let data = null;
   if (!auth) {
-    data = {
+    User.findOne({
+      username: username
+    }, {
       'password': 0,
       '_id': 0,
       'email': 0,
       'name': 0
-    };
+    }).
+    populate([{
+      path: 'comments',
+      select: 'date shortPostId content karma',
+      options: {
+        sort: {
+          'date': -1
+        }
+      },
+    }, {
+      path: 'posts',
+      select: 'date shortPostId title karma',
+      options: {
+        sort: {
+          'date': -1
+        }
+      },
+    }]).
+    lean().
+    exec(function(erruser, user) {
+      let totalKarma = 0;
+      for (comment of user.comments) {
+        totalKarma += comment.karma;
+      }
+      for (post of user.posts) {
+        totalKarma += post.karma;
+      }
+      user.karma = totalKarma;
+      callback(erruser, user);
+    });
+  } else {
+    User.findOne({
+      username: username
+    }, {
+      'shortUserId': 1,
+      'name': 1,
+      'username': 1,
+      'email': 1,
+      'password': 1
+    }, callback);
   }
-  const query = {
-    username: username
-  };
-  User.findOne(query, data, callback);
 }
 
 module.exports.addUser = function(newUser, callback) {
@@ -155,37 +201,19 @@ module.exports.comparePassword = function(candidatePassword, hash, callback) {
   });
 }
 
-module.exports.getPostVotes = function(postId, userId, callback) {
-  Post.findOne({
-    shortPostId: postId
-  }, {
-    'comments': 1
-  }).
-  populate([{
-    path: 'comments',
-    select: 'shortCommentId'
-  }]).
-  exec(function(errpost, post) {
-    User.findById(userId, {
-      'cvotes': 1
-    }).
-    populate([{
-      path: 'cvotes.commentId',
-      select: '_id'
-    }]).
-    exec(function(erruser, user) {
-      let areVoted = [];
-      for (let i = 0; i < post.comments.length; i++) {
-        for (let j = 0; j < user.cvotes.length; j++) {
-          if (user.cvotes[j].commentId._id.equals(post.comments[i]._id)) {
-            areVoted.push({
-              id: post.comments[i].shortCommentId,
-              vote: user.cvotes[j].vote
-            });
-          }
-        }
-      }
-      callback(errpost, areVoted);
-    });
-  });
-}
+// for future use
+// module.exports.getUserPosts = function(userId, callback) {
+//   findOne({
+//     shortUserId: userId
+//   }, {
+//     'posts': 1
+//   }, callback(err, user.posts));
+// }
+//
+// module.exports.getUserComments = function(userId, callback) {
+//   findOne({
+//     shortUserId: userId
+//   }, {
+//     'comments': 1
+//   }, callback(err, user.comments));
+// }

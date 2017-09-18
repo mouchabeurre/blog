@@ -92,19 +92,11 @@ router.post('/user/authenticate', (req, res, next) => {
   User.getUserByUsername(username, true, (err, user) => {
     if (err) throw err;
     if (!user) {
-      if (req.body.username) {
-        return res.json({
-          success: false,
-          msg: 'User not found or wrong password',
-          feedback: 3 // danger
-        });
-      } else {
-        return res.json({
-          success: false,
-          msg: 'User not found or wrong password',
-          feedback: 3 // danger
-        });
-      }
+      return res.json({
+        success: false,
+        msg: 'User not found or wrong password',
+        feedback: 3 // danger
+      });
     }
 
     User.comparePassword(password, user.password, (err, isMatch) => {
@@ -145,11 +137,17 @@ router.get('/profile', passport.authenticate('jwt', {
 }), (req, res, next) => {
   let userId = req.user._id;
   User.getUserById(userId, (err, profile) => {
-  	if (err) {
-  		res.json({ success: false, msg: 'Failed to retrieve profile' });
-  	} else {
-  		res.json(profile);
-  	}
+    if (err) {
+      res.json({
+        success: false,
+        msg: 'Failed to retrieve profile'
+      });
+    } else {
+      res.json({
+        success: true,
+        profile: profile
+      });
+    }
   });
 });
 
@@ -163,7 +161,10 @@ router.get('/user/:username', (req, res, next) => {
         msg: 'Failed to retrieve profile'
       });
     } else {
-      res.json(profile);
+      res.json({
+        success: true,
+        profile: profile
+      });
     }
   });
 });
@@ -178,7 +179,10 @@ router.get('/feed', (req, res, next) => {
         msg: 'Failed to retrieve feed'
       });
     } else {
-      res.json(feed);
+      res.json({
+        success: true,
+        feed: feed
+      });
     }
   });
 });
@@ -193,7 +197,10 @@ router.get('/post/:id', (req, res, next) => {
         msg: 'Failed to retrieve post'
       });
     } else {
-      res.json(post);
+      res.json({
+        success: true,
+        post: post
+      });
     }
   });
 });
@@ -244,7 +251,8 @@ router.post('/post/:id/comment', passport.authenticate('jwt', {
       let newComment = new Comment({
         authorId: authorId,
         postId: post._id,
-        content: content
+        content: content,
+        shortPostId: post.shortPostId
       });
 
       Comment.addComment(newComment, (err, comment) => {
@@ -267,13 +275,34 @@ router.post('/post/:id/comment', passport.authenticate('jwt', {
   });
 });
 
+// get user vote for post
+router.get('/post/:id/pvote', passport.authenticate('jwt', {
+  session: false
+}), (req, res, next) => {
+  let postId = req.params.id;
+  let userId = req.user._id;
+  Post.getPostVote(postId, userId, (err, loadout) => {
+    if (err) {
+      res.json({
+        success: false,
+        msg: 'Failed to retrieve post vote'
+      });
+    } else {
+      res.json({
+        success: true,
+        vote: loadout.vote
+      });
+    }
+  });
+});
+
 // get user comments votes for post
 router.get('/post/:id/cvotes', passport.authenticate('jwt', {
   session: false
 }), (req, res, next) => {
   let postId = req.params.id;
   let userId = req.user._id;
-  User.getPostVotes(postId, userId, (err, votedArray) => {
+  Post.getPostCommentVotes(postId, userId, (err, votedArray) => {
     if (err) {
       res.json({
         success: false,
@@ -295,7 +324,7 @@ router.put('/post/:id/upvote', passport.authenticate('jwt', {
 }), (req, res, next) => {
   let postId = req.params.id;
   let userId = req.user._id;
-  Post.votePost(postId, 1, userId, (err, post) => {
+  Post.votePost(postId, 1, userId, (err, vote) => {
     if (err) {
       res.json({
         success: false,
@@ -304,7 +333,7 @@ router.put('/post/:id/upvote', passport.authenticate('jwt', {
     } else {
       res.json({
         success: true,
-        msg: 'Upvoted'
+        vote: vote
       });
     }
   });
@@ -316,7 +345,7 @@ router.put('/post/:id/downvote', passport.authenticate('jwt', {
 }), (req, res, next) => {
   let postId = req.params.id;
   let userId = req.user._id;
-  Post.votePost(postId, -1, userId, (err, post) => {
+  Post.votePost(postId, -1, userId, (err, vote) => {
     if (err) {
       res.json({
         success: false,
@@ -325,7 +354,7 @@ router.put('/post/:id/downvote', passport.authenticate('jwt', {
     } else {
       res.json({
         success: true,
-        msg: 'Downvoted'
+        vote: vote
       });
     }
   });
