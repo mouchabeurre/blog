@@ -10,11 +10,11 @@ const config = require('./config/database');
 mongoose.Promise = global.Promise;
 
 // Connect To Database
-mongoose.connect(config.database);
+mongoose.connect(process.env.MONGODB_URI || config.database);
 
 // On Connection
 mongoose.connection.on('connected', () => {
-  console.log('Connected to database ' + config.database);
+  console.log('Connected to database');
 });
 
 // On Error

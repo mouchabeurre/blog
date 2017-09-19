@@ -102,9 +102,10 @@ router.post('/user/authenticate', (req, res, next) => {
     User.comparePassword(password, user.password, (err, isMatch) => {
       if (err) throw err;
       if (isMatch) {
+        let secret = process.env.SECRET || config.secret
         const token = jwt.sign({
           userId: user._id
-        }, config.secret, {
+        }, secret, {
           expiresIn: 604800 // 1 week
         });
 

@@ -6,7 +6,7 @@ const config = require('./database');
 module.exports = function(passport){
 	let opts = {};
 	opts.jwtFromRequest = ExtractJwt.fromAuthHeader();
-	opts.secretOrKey = config.secret;
+	opts.secretOrKey = process.env.SECRET || config.secret;
 	passport.use(new JwtStrategy(opts, (jwt_payload, done) => {
 		User._authUserById(jwt_payload.userId, (err, user) => {
 			if(err){

@@ -94,5 +94,8 @@ angular-src
 # public build
 # public
 
+# db id
+# config/database.js
+
 # VS Code
 .vscode

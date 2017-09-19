@@ -176,7 +176,6 @@ module.exports.votePost = function(postId, vote, userId, callback) {
     } else {
       vote = 0
     }
-    console.log(loadout.vote, vote, processedVote);
     Post.findOneAndUpdate({
       shortPostId: postId
     }, {
